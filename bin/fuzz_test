@@ -1,0 +1,98 @@
+#!/bin/bash
+set -e
+
+usage="$(basename "$0") [-h] [-i -o -p -t] <target> -- build project
+where:
+-p  number of threads to build with (default is number of available cores)
+-t  minimum number of seconds to run each fuzz job
+-i  input directory where the FUZZ_TESTs are (default fuzz_tests)
+-o  output directory (default fuzz_results)
+"
+
+# Setup default values
+SOURCE_DIR=$PWD
+INPUT_DIR=${SOURCE_DIR}/fuzz_tests
+OUTPUT_DIR=${SOURCE_DIR}/fuzz_results
+EXECUTABLE=
+PROC_COUNT=8
+
+# Minimum time spent running a fuzz test
+FUZZ_TIME_SECS=300
+
+if [ "$(uname -s)" == "Linux" ]; then
+    PROC_COUNT=`grep -c ^processor /proc/cpuinfo`
+fi
+
+run_fuzz_test()
+{
+    echo "Running fuzz test ${1}"
+    test_name=${1}
+    mkdir -p "${OUTPUT_DIR}/${test_name}"
+    cd "${OUTPUT_DIR}/${test_name}"
+    "${EXECUTABLE}" "./" -run_test="$test_name" -jobs=${PROC_COUNT} -workers=${PROC_COUNT} -detect_leaks=1 -max_total_time=$FUZZ_TIME_SECS && echo -e "\u001b[32m${test_name} Passed!\u001b[0m" || echo -e "\u001b[31m${test_name} Failed!\u001b[0m"
+    cd "${SOURCE_DIR}"
+}
+
+fuzz_project()
+{
+    mkdir -p ${OUTPUT_DIR}
+    grep -roP 'FUZZ_TEST *\( *[a-zA-Z0-9]+ *, *[a-zA-Z0-9]+ *' ${INPUT_DIR} | grep -Ei "\.(cpp|c|cc|cxx):" | sed -E 's/.*FUZZ_TEST *\( *([-_a-zA-Z0-9]+) *, *([-_a-zA-Z0-9]+) */\1_\2/' | uniq | while IFS=$'\n' read test_name; do
+        run_fuzz_test "$test_name"
+    done
+
+    # run code coverage
+    rm -f "${OUTPUT_DIR}/cov.profdata" || true
+    rm -f "${OUTPUT_DIR}/cov-report" || true
+    llvm-profdata merge "${OUTPUT_DIR}/*/default.profraw" -output="${OUTPUT_DIR}/*/cov.profdata"
+    llvm-cov show -output-dir="${OUTPUT_DIR}/cov-report" -format=html -instr-profile="${OUTPUT_DIR}/cov.profdata" "${EXECUTABLE}"
+    echo -e "\u001b[34mFuzzing code coverage generated at ${SOURCE_DIR}/fuzz_tests/results/cov-report/index.html\u001b[0m"
+
+    return 0
+}
+
+while getopts "::h :t: :p: :o: :i:" opt; do
+  case $opt in
+    p)
+      PROC_COUNT="$OPTARG"
+      ;;
+    o)
+      OUTPUT_DIR="$OPTARG"
+      ;;
+    i)
+      INPUT_DIR="$OPTARG"
+      ;;
+    e)
+      EXECUTABLE="$OPTARG"
+      ;;
+    t)
+      FUZZ_TIME_SECS="$OPTARG"
+      ;;
+    h)
+      echo "$usage" >&2
+      exit
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 
+      ;;
+  esac
+done
+
+if [ "$#" -lt 1 ]; then
+    echo "Illegal number of parameters" >&2
+    echo "$usage" >&2
+    exit 1
+fi
+
+EXECUTABLE="${@: -1}"
+if [ "${EXECUTABLE}" == "" ]; then
+    echo "Target not specified" >&2
+    echo "$usage" >&2
+    exit 1
+fi
+
+fuzz_project
