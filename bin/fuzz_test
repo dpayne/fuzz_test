@@ -1,18 +1,20 @@
 #!/bin/bash
 set -e
 
-usage="$(basename "$0") [-h] [-i -o -p -t] <target> -- build project
+usage="$(basename "$0") [-h] [-i -o -c -p -t] <target> -- build project
 where:
 -p  number of threads to build with (default is number of available cores)
 -t  minimum number of seconds to run each fuzz job
 -i  input directory where the FUZZ_TESTs are (default fuzz_tests)
 -o  output directory (default fuzz_results)
+-c  corpus directory (default <input_dir>/corpus)
 "
 
 # Setup default values
 SOURCE_DIR=$PWD
 INPUT_DIR=${SOURCE_DIR}/fuzz_tests
 OUTPUT_DIR=${SOURCE_DIR}/fuzz_results
+CORPUS_DIR=${INPUT_DIR}/corpus
 EXECUTABLE=
 PROC_COUNT=8
 
@@ -29,7 +31,7 @@ run_fuzz_test()
     test_name=${1}
     mkdir -p "${OUTPUT_DIR}/${test_name}"
     cd "${OUTPUT_DIR}/${test_name}"
-    "${EXECUTABLE}" "./" -run_test="$test_name" -jobs=${PROC_COUNT} -workers=${PROC_COUNT} -detect_leaks=1 -max_total_time=$FUZZ_TIME_SECS && echo -e "\u001b[32m${test_name} Passed!\u001b[0m" || echo -e "\u001b[31m${test_name} Failed!\u001b[0m"
+    "${EXECUTABLE}" "./" "${CORPUS_DIR}" -run_test="$test_name" -jobs=${PROC_COUNT} -workers=${PROC_COUNT} -detect_leaks=1 -max_total_time=$FUZZ_TIME_SECS && echo -e "\u001b[32m${test_name} Passed!\u001b[0m" || echo -e "\u001b[31m${test_name} Failed!\u001b[0m"
     cd "${SOURCE_DIR}"
 }
 
@@ -50,10 +52,13 @@ fuzz_project()
     return 0
 }
 
-while getopts "::h :t: :p: :o: :i:" opt; do
+while getopts "::h :t: :c: :p: :o: :i:" opt; do
   case $opt in
     p)
       PROC_COUNT="$OPTARG"
+      ;;
+    c)
+      CORPUS_DIR="$OPTARG"
       ;;
     o)
       OUTPUT_DIR="$OPTARG"

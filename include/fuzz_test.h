@@ -53,3 +53,9 @@ extern struct FuzzTestInfo * __fuzz_last_test;
     } \
     /* Start of the function implementation, the function name will be FuzzTest_Test_Category_name */ \
     void FuzzTest_Test_ ## category ## _ ## name( var1, var2 )
+
+
+// This is a useful way to effectively disable a test without having to delete the whole thing
+#define FUZZ_TEST_DISABLED(category, name, var1, var2) \
+    /* Disable this test */ \
+    void FuzzTest_TestDisabled_ ## category ## _ ## name( var1, var2 )
