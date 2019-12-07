@@ -32,6 +32,7 @@ run_fuzz_test()
     mkdir -p "${OUTPUT_DIR}/${test_name}"
     mkdir -p "${CORPUS_DIR}/${test_name}"
     cd "${OUTPUT_DIR}/${test_name}"
+    echo "Running: ${EXECUTABLE} -merge ./ ${CORPUS_DIR}/${test_name} -run_test=$test_name -jobs=${PROC_COUNT} -workers=${PROC_COUNT} -detect_leaks=1 -max_total_time=$FUZZ_TIME_SECS"
     "${EXECUTABLE}" -merge "./" "${CORPUS_DIR}/${test_name}" -run_test="$test_name" -jobs=${PROC_COUNT} -workers=${PROC_COUNT} -detect_leaks=1 -max_total_time=$FUZZ_TIME_SECS && echo -e "\u001b[32m${test_name} Passed!\u001b[0m" || echo -e "\u001b[31m${test_name} Failed!\u001b[0m"
     cd "${SOURCE_DIR}"
 }
