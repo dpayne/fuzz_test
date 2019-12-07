@@ -14,7 +14,7 @@ libfuzz_test.a: src/fuzz_test.o
 	$(AR) r libfuzz_test.a src/fuzz_test.o
 	ranlib libfuzz_test.a
 
-src/fuzz_test.o: src/fuzz_test.cpp include/fuzz_test.h
+src/fuzz_test.o: src/fuzz_test.cpp include/fuzz_test.h include/fuzzer/FuzzedDataProvider.h
 	$(CXX) $(LDFLAGS) -I./include -c -o src/fuzz_test.o src/fuzz_test.cpp
 
 clean:
@@ -28,5 +28,6 @@ install: libfuzz_test.a
 	install -m 644 libfuzz_test.a $(DESTDIR)$(PREFIX)/lib/
 	install -d $(DESTDIR)$(PREFIX)/include/
 	install -m 644 include/fuzz_test.h $(DESTDIR)$(PREFIX)/include/
+	install -m 644 include/fuzzer/FuzzedDataProvider.h $(DESTDIR)$(PREFIX)/include/
 	install -d $(DESTDIR)$(PREFIX)/bin/
 	install -m 755 bin/fuzz_test $(DESTDIR)$(PREFIX)/bin/
