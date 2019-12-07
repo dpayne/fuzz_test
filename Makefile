@@ -27,7 +27,8 @@ install: libfuzz_test.a
 	install -d $(DESTDIR)$(PREFIX)/lib/
 	install -m 644 libfuzz_test.a $(DESTDIR)$(PREFIX)/lib/
 	install -d $(DESTDIR)$(PREFIX)/include/
+	install -d $(DESTDIR)$(PREFIX)/include/fuzzer
 	install -m 644 include/fuzz_test.h $(DESTDIR)$(PREFIX)/include/
-	install -m 644 include/fuzzer/FuzzedDataProvider.h $(DESTDIR)$(PREFIX)/include/
+	install -m 644 include/fuzzer/FuzzedDataProvider.h $(DESTDIR)$(PREFIX)/include/fuzzer
 	install -d $(DESTDIR)$(PREFIX)/bin/
 	install -m 755 bin/fuzz_test $(DESTDIR)$(PREFIX)/bin/
