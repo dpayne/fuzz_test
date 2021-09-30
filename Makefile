@@ -1,8 +1,8 @@
 CXX=clang++
 CC=clang
 RM=rm -f
-CPPFLAGS:=-g3 -ggdb -fsanitize=address,fuzzer -fprofile-instr-generate -fcoverage-mapping -O1 $(CPPFLAGS)
-LDFLAGS:=-g3 -ggdb -fsanitize=address,fuzzer -fprofile-instr-generate -fcoverage-mapping -O1 $(LDFLAGS)
+CPPFLAGS:=-g3 -std=c++17 -ggdb -fsanitize=address,fuzzer -fprofile-instr-generate -fcoverage-mapping -O1 $(CPPFLAGS)
+LDFLAGS:=-g3 -std=c++17 -ggdb -fsanitize=address,fuzzer -fprofile-instr-generate -fcoverage-mapping -O1 $(LDFLAGS)
 
 PREFIX ?= /usr/local
 
